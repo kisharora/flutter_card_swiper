@@ -14,6 +14,7 @@ class CardAnimation {
     this.isVerticalSwipingEnabled = true,
     this.allowedSwipeDirection = const AllowedSwipeDirection.all(),
     this.onSwipeDirectionChanged,
+    this.onSwipeProgress,
   }) : scale = initialScale;
 
   final double maxAngle;
@@ -23,7 +24,9 @@ class CardAnimation {
   final bool isHorizontalSwipingEnabled;
   final bool isVerticalSwipingEnabled;
   final AllowedSwipeDirection allowedSwipeDirection;
+
   final ValueChanged<CardSwiperDirection>? onSwipeDirectionChanged;
+  final ValueChanged<double>? onSwipeProgress;
 
   double left = 0;
   double top = 0;
@@ -99,6 +102,7 @@ class CardAnimation {
     updateAngle(inverseAngle);
     updateScale();
     updateDifference();
+    onSwipeProgress?.call(left);
   }
 
   void updateAngle(bool inverse) {
