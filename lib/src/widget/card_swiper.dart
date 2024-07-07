@@ -14,7 +14,6 @@ import 'package:flutter_card_swiper/src/utils/undoable.dart';
 part 'card_swiper_state.dart';
 
 class CardSwiper extends StatefulWidget {
-  /// Function that builds each card in the stack.
   ///
   /// The function is called with the index of the card to be built, the build context, the ratio
   /// of vertical drag to [threshold] as a percentage, and the ratio of horizontal drag to [threshold]
