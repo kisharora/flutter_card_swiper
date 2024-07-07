@@ -157,11 +157,17 @@ class _CardSwiperState<T extends Widget> extends State<CardSwiper>
   }
 
   void _controllerListener(ControllerEvent event) {
-    return switch (event) {
-      ControllerSwipeEvent(:final direction) => _swipe(direction),
-      ControllerUndoEvent() => _undo(),
-      ControllerMoveEvent(:final index) => _moveTo(index),
-    };
+    switch (event) {
+      case ControllerSwipeEvent(:final direction):
+        _swipe(direction);
+        break;
+      case ControllerUndoEvent():
+        _undo();
+        break;
+      case ControllerMoveEvent(:final index):
+        _moveTo(index);
+        break;
+    }
   }
 
   void _animationListener() {
@@ -172,11 +178,8 @@ class _CardSwiperState<T extends Widget> extends State<CardSwiper>
 
   Future<void> _animationStatusListener(AnimationStatus status) async {
     if (status == AnimationStatus.completed) {
-      switch (_swipeType) {
-        case SwipeType.swipe:
-          await _handleCompleteSwipe();
-        default:
-          break;
+      if (_swipeType == SwipeType.swipe) {
+        await _handleCompleteSwipe();
       }
 
       _reset();
@@ -237,13 +240,18 @@ class _CardSwiperState<T extends Widget> extends State<CardSwiper>
   }
 
   bool _isValidDirection(CardSwiperDirection direction) {
-    return switch (direction) {
-      CardSwiperDirection.left => widget.allowedSwipeDirection.left,
-      CardSwiperDirection.right => widget.allowedSwipeDirection.right,
-      CardSwiperDirection.top => widget.allowedSwipeDirection.up,
-      CardSwiperDirection.bottom => widget.allowedSwipeDirection.down,
-      _ => false
-    };
+    switch (direction) {
+      case CardSwiperDirection.left:
+        return widget.allowedSwipeDirection.left;
+      case CardSwiperDirection.right:
+        return widget.allowedSwipeDirection.right;
+      case CardSwiperDirection.top:
+        return widget.allowedSwipeDirection.up;
+      case CardSwiperDirection.bottom:
+        return widget.allowedSwipeDirection.down;
+      default:
+        return false;
+    }
   }
 
   void _swipe(CardSwiperDirection direction) {

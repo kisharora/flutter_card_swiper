@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'dart:ui';
-
 import 'package:flutter/widgets.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 
@@ -43,10 +42,15 @@ class CardAnimation {
   double get _maxAngleInRadian => maxAngle * (math.pi / 180);
 
   void sync() {
-    left = _leftAnimation.value;
-    top = _topAnimation.value;
-    scale = _scaleAnimation.value;
-    difference = _differenceAnimation.value;
+    if (_leftAnimation.value != left ||
+        _topAnimation.value != top ||
+        _scaleAnimation.value != scale ||
+        _differenceAnimation.value != difference) {
+      left = _leftAnimation.value;
+      top = _topAnimation.value;
+      scale = _scaleAnimation.value;
+      difference = _differenceAnimation.value;
+    }
   }
 
   void reset() {
@@ -60,49 +64,36 @@ class CardAnimation {
   }
 
   void update(double dx, double dy, bool inverseAngle) {
-    if (allowedSwipeDirection.right && allowedSwipeDirection.left) {
-      if (left > 0) {
-        onSwipeDirectionChanged?.call(CardSwiperDirection.right);
-      } else if (left < 0) {
-        onSwipeDirectionChanged?.call(CardSwiperDirection.left);
-      }
+    bool updated = false;
+
+    if ((allowedSwipeDirection.left && dx < 0) ||
+        (allowedSwipeDirection.right && dx > 0)) {
       left += dx;
-    } else if (allowedSwipeDirection.right) {
-      if (left >= 0) {
-        onSwipeDirectionChanged?.call(CardSwiperDirection.right);
-        left += dx;
-      }
-    } else if (allowedSwipeDirection.left) {
-      if (left <= 0) {
-        onSwipeDirectionChanged?.call(CardSwiperDirection.left);
-        left += dx;
-      }
+      updated = true;
     }
 
-    if (allowedSwipeDirection.up && allowedSwipeDirection.down) {
-      if (top > 0) {
-        onSwipeDirectionChanged?.call(CardSwiperDirection.bottom);
-      } else if (top < 0) {
-        onSwipeDirectionChanged?.call(CardSwiperDirection.top);
-      }
+    if ((allowedSwipeDirection.up && dy < 0) ||
+        (allowedSwipeDirection.down && dy > 0)) {
       top += dy;
-    } else if (allowedSwipeDirection.up) {
-      if (top <= 0) {
-        onSwipeDirectionChanged?.call(CardSwiperDirection.top);
-        top += dy;
-      }
-    } else if (allowedSwipeDirection.down) {
-      if (top >= 0) {
-        onSwipeDirectionChanged?.call(CardSwiperDirection.bottom);
-        top += dy;
-      }
+      updated = true;
     }
 
-    total = left + top;
-    updateAngle(inverseAngle);
-    updateScale();
-    updateDifference();
-    onSwipeProgress?.call(left);
+    if (updated) {
+      total = left + top;
+      updateAngle(inverseAngle);
+      updateScale();
+      updateDifference();
+      onSwipeProgress?.call(left);
+      onSwipeDirectionChanged?.call(
+        left > 0
+            ? CardSwiperDirection.right
+            : left < 0
+                ? CardSwiperDirection.left
+                : top > 0
+                    ? CardSwiperDirection.bottom
+                    : CardSwiperDirection.top,
+      );
+    }
   }
 
   void updateAngle(bool inverse) {
@@ -120,33 +111,29 @@ class CardAnimation {
 
   void updateDifference() {
     final discrepancy = (total / 10).abs();
-
-    var diffX = 0.0;
-    var diffY = 0.0;
-
-    if (initialOffset.dx > 0) {
-      diffX = discrepancy;
-    } else if (initialOffset.dx < 0) {
-      diffX = -discrepancy;
-    }
-
-    if (initialOffset.dy < 0) {
-      diffY = -discrepancy;
-    } else if (initialOffset.dy > 0) {
-      diffY = discrepancy;
-    }
-
-    difference = Offset(diffX, diffY);
+    difference = Offset(
+      initialOffset.dx == 0 ? 0 : discrepancy * initialOffset.dx.sign,
+      initialOffset.dy == 0 ? 0 : discrepancy * initialOffset.dy.sign,
+    );
   }
 
   void animate(BuildContext context, CardSwiperDirection direction) {
-    return switch (direction) {
-      CardSwiperDirection.left => animateHorizontally(context, false),
-      CardSwiperDirection.right => animateHorizontally(context, true),
-      CardSwiperDirection.top => animateVertically(context, false),
-      CardSwiperDirection.bottom => animateVertically(context, true),
-      CardSwiperDirection.none => null,
-    };
+    switch (direction) {
+      case CardSwiperDirection.left:
+        animateHorizontally(context, false);
+        break;
+      case CardSwiperDirection.right:
+        animateHorizontally(context, true);
+        break;
+      case CardSwiperDirection.top:
+        animateVertically(context, false);
+        break;
+      case CardSwiperDirection.bottom:
+        animateVertically(context, true);
+        break;
+      case CardSwiperDirection.none:
+        break;
+    }
   }
 
   void animateHorizontally(BuildContext context, bool isToRight) {
@@ -214,13 +201,22 @@ class CardAnimation {
   }
 
   void animateUndo(BuildContext context, CardSwiperDirection direction) {
-    return switch (direction) {
-      CardSwiperDirection.left => animateUndoHorizontally(context, false),
-      CardSwiperDirection.right => animateUndoHorizontally(context, true),
-      CardSwiperDirection.top => animateUndoVertically(context, false),
-      CardSwiperDirection.bottom => animateUndoVertically(context, true),
-      _ => null
-    };
+    switch (direction) {
+      case CardSwiperDirection.left:
+        animateUndoHorizontally(context, false);
+        break;
+      case CardSwiperDirection.right:
+        animateUndoHorizontally(context, true);
+        break;
+      case CardSwiperDirection.top:
+        animateUndoVertically(context, false);
+        break;
+      case CardSwiperDirection.bottom:
+        animateUndoVertically(context, true);
+        break;
+      case CardSwiperDirection.none:
+        break;
+    }
   }
 
   void animateUndoHorizontally(BuildContext context, bool isToRight) {
